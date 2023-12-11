@@ -7,29 +7,36 @@ import sys, time, datetime, serial, csv
 
 start = datetime.datetime.now()
 
-SerialInst = serial.Serial("COM4",115200) # Genau checken zu welchem COM man das Arduino verbunden hat
+
 x = []
 list_of_pressuredata = []
 list_of_temp_data = []
-minuten = 24*60
-framelimit = 60*minuten #gibt die Frameanzahl an. Entspricht mit dem intervall von 1000 genau der oben angegebenen Minutenanzahl
+framelimit = 24*60*60*5 #gibt die Frameanzahl an. Entspricht mit dem intervall von 200 (5mal pro Sekunde) genau der oben angegebenen Minutenanzahl
 
 #initialisation vom Graphen
 fig, (ax1,ax2) = plt.subplots(2,1)
 line1, = ax1.plot([], [], lw=2)
 line2, = ax2.plot([], [], lw=2, color='r')
 line = [line1, line2]
+SerialInst = serial.Serial("COM4",9600) # Genau checken zu welchem COM man das Arduino verbunden hat
 
 #funktion, die jedes Frame der Animation erzeugt. Falls es einen Fehler gibt bei der Datenergreifung gibt es null aus. Nach der Frameanzahl wird das Fenster neu angezeigt.
 def animate(frame):
+
+
         error = False #error check um die Daten die nicht gemessen werden konnten nicht abzubilden
-        if frame < 4: #ist nur da, da ich gemerkt habe, dass der Code Probleme hat die Daten der ersten paar Iterationen zu lesn
+        if frame < 3 : #ist nur da, da ich gemerkt habe, dass der Code Probleme hat die Daten der ersten paar Iterationen zu lesn
                 error = True
         print(frame)
         global list_of_temp_data
         global list_of_pressuredata
         global x
         global start
+
+        if frame % 4 == 0:                      #nötiger Check, da der USB zu viele alte Werte im cache speichert, sodass der Code nur alte Werte entnimmt, die "gelaggt" erscheinen. 
+                SerialInst.reset_input_buffer() #Heisst auch, dass jede 2sek eine halbe Sekunde nicht gemessen wird.
+                error = False              
+
         packet = SerialInst.readline()
         readout = packet.decode("utf")
 
@@ -88,6 +95,7 @@ def animate(frame):
         ax2.set_ylabel("Druck in KPa")  
 
 
+
 # Funktion, die beim Schliessen des Fensters oder bei einer bestimmsten Frameanzahl (eingespeichert ist jede 24h) die Daten an Excel speichert 
 def on_close(event):
         # Specify the CSV file path
@@ -110,6 +118,5 @@ def on_close(event):
 
 
 fig.canvas.mpl_connect("close_event", on_close) #gibt an, was nach dem Schliessen des Graphen passieren soll
-ani = FuncAnimation(fig,animate,interval = 1000, frames = framelimit) #Die Rechnung hier ist: Interval * Frames / 1000 ist die Dauer der Animation in Sekunden
-#ax2.plot([1,2],[2,4])
+ani = FuncAnimation(fig,animate,interval = 200, frames = framelimit) #Die Rechnung hier ist: Interval * Frames / 1000 ist die Dauer der Animation in Sekunden
 plt.show()
