@@ -46,9 +46,9 @@ def animate(frame):
                 try:
                         pressuredata = readout.split("Temperature = ")[0].split("Water pressure = ")[1] #benutzt nur um die Werte herauszulesen, kommt stark auf den Serial Output des Arduinos an
                         temp_data = readout.split("Temperature = ")[1]
-                        print("Pressure: %s" % (pressuredata) )
+                        print("Pressure: %s" % (pressuredata))
                         print("Temperature: %s" %(temp_data)) 
-                        x.append(frame+1) 
+                        x.append((frame+1)/5) 
                 except Exception as e:
                                 error = True
                                 print(e)
@@ -85,10 +85,11 @@ def animate(frame):
         ax2.cla()
         #plottet den neuen plot
         try:
-                ax1.plot(x,list_of_temp_data)
-                ax2.plot(x,list_of_pressuredata)
+                ax1.plot(x,list_of_temp_data,"-")
+                ax2.plot(x,list_of_pressuredata,"-")
         except Exception as e: 
                 print(e)
+
         #plottet die axenlabels
         ax1.set_ylabel("Temperatur in C")
         ax2.set_xlabel("t in Sekunden")
